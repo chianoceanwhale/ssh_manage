@@ -1,19 +1,24 @@
 package config
 
 import (
-	"github.com/BurntSushi/toml"
 	"log"
+
+	"github.com/BurntSushi/toml"
 )
 
 //订制配置文件解析载体
 type config struct {
-	Web      *webset
-	Database *database
-	Redis    *redis
-	Alisms   *alisms
-	Jwt		 *jwtInfo
+	Web        *webset
+	Database   *database
+	Redis      *redis
+	Alisms     *alisms
+	Jwt        *jwtInfo
+	CaptchaDir *captchaDirInfo
 }
 
+type captchaDirInfo struct {
+	Path string
+}
 type jwtInfo struct {
 	Key string
 }

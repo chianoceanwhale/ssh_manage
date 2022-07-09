@@ -25,3 +25,6 @@ template = "-"  #模板代码
 
 [Jwt]
 key = "ss_jwt_token"
+
+[CaptchaDir]
+path:="/root/captcha/"

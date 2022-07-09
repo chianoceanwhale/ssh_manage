@@ -19,7 +19,7 @@ func VerifyMobileFormat(mobileNum string) bool {
 	return reg.MatchString(mobileNum)
 }
 
-func Sendsms(phone string) (captcha string,err error) {
+func Sendsms(phone string) (captcha string, err error) {
 	captcha = createCaptcha()
 	client, err := dysmsapi.NewClientWithAccessKey("cn-hangzhou", aliconfig.Accessid, aliconfig.Accesskey)
 	request := dysmsapi.CreateSendBatchSmsRequest()
@@ -37,6 +37,10 @@ func Sendsms(phone string) (captcha string,err error) {
 		log.Println(response)
 	}
 	return
+}
+
+func GetCaptcha() string {
+	return createCaptcha()
 }
 
 func createCaptcha() string {

@@ -70,6 +70,25 @@ type SerInfo struct {
 	BindUser uint
 }
 
+func (s *Send) WriteCaptcha(ip string) (err error) {
+	cache := database.Cache.Get()
+	defer cache.Close()
+	ipexists, _ := redis.Bool(cache.Do("EXISTS", ip))
+	phoneexists, _ := redis.Bool(cache.Do("EXISTS", s.Phone+"_time"))
+	if ipexists || phoneexists {
+		err = errors.New("验证码已经写入文件，无需重复写入")
+		return
+	}
+	cache.Send("MULTI")                             //开启事务操作
+	cache.Send("SETEX", s.Phone+"_time", 60*2, nil) //记录手机号与IP，防止重复发送
+	cache.Send("SETEX", ip, 60*2, nil)
+	capcha := common.GetCaptcha()
+	common.WriteCaptchaToFile(capcha, s.Phone)
+	cache.Send("SETEX", s.Phone, 60*5, capcha) //延长过期时间，用于校验
+	cache.Do("EXEC")                           //提交事务
+	return
+}
+
 func (s *Send) SendCaptcha(ip string) (err error) {
 	cache := database.Cache.Get()
 	defer cache.Close()
@@ -100,14 +119,14 @@ func (l *Login) Verify() (key, code string) {
 func (t *GetTerm) Decode(server model.Server) (sid string, err error) {
 	sid = uuid.Must(uuid.NewV4(), nil).String()
 	//log.Println(server)
-	s_pass,err := common.AesDecryptCBC(server.Password, []byte(t.Password))
-	if err != nil{
-		return "",err
+	s_pass, err := common.AesDecryptCBC(server.Password, []byte(t.Password))
+	if err != nil {
+		return "", err
 	}
 	if s_pass == "" {
 		return "", errors.New("秘钥验证失败")
 	} else {
-		var serinfo = SerInfo{server.ID,server.Ip,server.Port,server.Username,s_pass,server.BindUser}
+		var serinfo = SerInfo{server.ID, server.Ip, server.Port, server.Username, s_pass, server.BindUser}
 		//server.Password = s_pass //用于建立连接
 		cache := database.Cache.Get()
 		defer cache.Close()
